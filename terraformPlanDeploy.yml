@@ -1,0 +1,124 @@
+trigger:
+- main
+pool:
+  vmImage: windows-latest
+variables:
+  - group: azure.devtstvdc2.deploymentsecrets
+  - group: azdo.ssh.knownHosts
+  - name: majorVersion
+    value: 0
+  - name: minorVersion
+    value: 5
+  
+resources:
+  repositories:
+    - repository: tfTemplates                   # Name to assign to this resource within this pipeline.
+      type: git                                 # Repository type. Azure DevOps would be 'git'.
+      name: '/azuredevops-pipeline-templates'   # <project>/<repo>
+
+name: $(majorVersion).$(minorversion).$(Rev:r)
+stages:
+# Dev Plan & Deployment
+- template: terraform-planCLI.yml@tfTemplates
+  parameters:
+    dependsOn: []
+    deploymentName: AzureAutomationRunbooks
+    environment: azureDevVpc2
+    knownHosts: $(knownHosts)
+    sshPublicKey: $(DevSshPub)
+    sshPassphrase: $(DevSSH-Passphrase)
+    sshSecureFile: clurea_temp
+    sp_client_id: $(SPCQCKEYVAULTVDC2UKS-id)
+    sp_client_secret: $(SPCQCKEYVAULTVDC2UKS-secret)
+    tenant_id: $(dev-tenantId)
+    subscription_id: $(dev-vdc2-subID)
+    workingDirectory: 'tf-deploy'
+    tfvarsPath: ../environments/Dev/environment.tfvars
+    backendPath: ../environments/Dev/backend.tf
+
+- template: terraform-deployCLI.yml@tfTemplates
+  parameters:
+    dependsOn: [TerraformPlan_azureDevVpc2_AzureAutomationRunbooks]
+    deploymentName: AzureAutomationRunbooks
+    environment: azureDevVpc2
+    knownHosts: $(knownHosts)
+    sshPublicKey: $(DevSshPub)
+    sshPassphrase: $(DevSSH-Passphrase)
+    sshSecureFile: clurea_temp
+    sp_client_id: $(SPCQCKEYVAULTVDC2UKS-id)
+    sp_client_secret: $(SPCQCKEYVAULTVDC2UKS-secret)
+    tenant_id: $(dev-tenantId)
+    subscription_id: $(dev-vdc2-subID)
+    terraformConfigPath: tf-deploy
+    tfvarsPath: ../environments/Dev/environment.tfvars
+    backendPath: ../environments/Dev/backend.tf
+
+# UAT Plan & Deployment
+#- template: terraform-planCLI.yml@tfTemplates
+#  parameters:
+#    dependsOn: []
+#    deploymentName: AzureAutomationRunbooks
+ #   environment: UAT
+  #  knownHosts: $(knownHosts)
+   # sshPublicKey: $(sshPublicKey)
+   # sshPassphrase: $(sshPassphrase)
+    #sshSecureFile: $(sshSecureFile)
+#    sp_client_id: $(azdoClientId)
+#    sp_client_secret: $(azdoClientSecret)
+#    tenant_id: $(az-tenantId)
+#    subscription_id: $(uat-subscriptionId)  
+#    workingDirectory: 'tf-deploy'
+#    tfvarsPath: ../environments/UAT/environment.tfvars
+#    backendPath: ../environments/UAT/backend.tf
+
+#- template: terraform-deployCLI.yml@tfTemplates
+#  parameters:
+#    dependsOn: [TerraformPlan_UAT_AzureAutomationRunbooks]
+#    deploymentName: AzureAutomationRunbooks
+#    environment: UAT
+#    knownHosts: $(knownHosts)
+#    sshPublicKey: $(sshPublicKey)
+#    sshPassphrase: $(sshPassphrase)
+#    sshSecureFile: $(sshSecureFile)
+#    sp_client_id: $(azdoClientId)
+#    sp_client_secret: $(azdoClientSecret)
+#    tenant_id: $(az-tenantId)
+#    subscription_id: $(dev-subscriptionId)
+#    terraformConfigPath: tf-deploy
+#    tfvarsPath: ../environments/UAT/environment.tfvars
+#    backendPath: ../environments/UAT/backend.tf
+
+# Prod Plan & Deployment
+#- template: terraform-planCLI.yml@tfTemplates
+#  parameters:
+#    dependsOn: []
+#    deploymentName: AzureAutomationRunbooks
+#   environment: Prod
+#    knownHosts: $(knownHosts)
+#    sshPublicKey: $(sshPublicKey)
+#    sshPassphrase: $(sshPassphrase)
+#    sshSecureFile: $(sshSecureFile)
+#    sp_client_id: $(azdoClientId)
+#    sp_client_secret: $(azdoClientSecret)
+#    tenant_id: $(az-tenantId)
+#    subscription_id: $(prod-subscriptionId)
+#    workingDirectory: 'tf-deploy'
+#    tfvarsPath: ../environments/Prod/environment.tfvars
+#    backendPath: ../environments/Prod/backend.tf
+
+#- template: terraform-deployCLI.yml@tfTemplates
+#  parameters:
+#    dependsOn: [TerraformPlan_Prod_AzureAutomationRunbooks]
+#    deploymentName: AzureAutomationRunbooks
+#    environment: Prod    
+#    knownHosts: $(knownHosts)
+#    sshPublicKey: $(sshPublicKey)
+#    sshPassphrase: $(sshPassphrase)
+#    sshSecureFile: $(sshSecureFile)
+#    sp_client_id: $(azdoClientId)
+#    sp_client_secret: $(azdoClientSecret)
+#    tenant_id: $(az-tenantId)
+ #   subscription_id: $(prod-subscriptionId)
+ #   terraformConfigPath: tf-deploy
+ #   tfvarsPath: ../environments/Prod/environment.tfvars
+ #   backendPath: ../environments/Prod/backend.tf
